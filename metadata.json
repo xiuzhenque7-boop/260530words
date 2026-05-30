@@ -1,0 +1,6 @@
+{
+  "name": "English Word Dictation",
+  "description": "An interactive English word dictation application. Upload images or text files to extract words, automatically generate phonetic transcriptions and example sentences with AI, customize dictation options, and track misspelled words in a personal review bank.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
