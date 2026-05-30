@@ -105,7 +105,7 @@ export default function App() {
       {!healthStatus.hasApiKey && (
         <div className="bg-amber-500 text-white py-2 px-4 text-center text-xs font-semibold flex items-center justify-center gap-2" id="api-key-warning">
           <AlertCircle className="w-4 h-4 shrink-0" />
-          <span>检测到未配置大模型 API Key。一键智能填充释义、句释功能暂不可用。请在后台 Settings ➔ Secrets 处添加 GEMINI_API_KEY 或 DEEPSEEK_API_KEY。</span>
+          <span>检测到未配置 GEMINI_API_KEY。一键智能填充释义、图片拍照单词提取功能暂不可用。请在后台 Settings ➔ Secrets 处添加并配置。</span>
         </div>
       )}
 
@@ -120,12 +120,8 @@ export default function App() {
               <div className="flex items-center gap-2">
                 <h1 className="text-base font-extrabold text-slate-900 tracking-tight">AI 智能单词默写助手</h1>
                 {healthStatus.hasApiKey && (
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-extrabold uppercase tracking-wider ${
-                    healthStatus.provider === "deepseek" 
-                      ? "bg-blue-50 text-blue-600 border border-blue-200" 
-                      : "bg-indigo-50 text-indigo-600 border border-indigo-200"
-                  }`}>
-                    {healthStatus.provider === "deepseek" ? "DeepSeek" : "Gemini"}
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-md font-extrabold uppercase tracking-wider bg-indigo-50 text-indigo-600 border border-indigo-200">
+                    Gemini AI
                   </span>
                 )}
               </div>
