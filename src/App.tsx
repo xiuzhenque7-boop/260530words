@@ -20,7 +20,11 @@ export default function App() {
   
   // UI expansions
   const [expandedListId, setExpandedListId] = useState<string | null>(null);
-  const [healthStatus, setHealthStatus] = useState<{ ok: boolean; hasApiKey: boolean }>({ ok: true, hasApiKey: true });
+  const [healthStatus, setHealthStatus] = useState<{ ok: boolean; hasApiKey: boolean; provider: string }>({ 
+    ok: true, 
+    hasApiKey: true, 
+    provider: "none" 
+  });
 
   // Sync data on load and during state changes
   const reloadData = () => {
@@ -35,7 +39,11 @@ export default function App() {
     fetch("/api/health")
       .then((res) => res.json())
       .then((data) => {
-        setHealthStatus({ ok: true, hasApiKey: !!data.hasApiKey });
+        setHealthStatus({ 
+          ok: true, 
+          hasApiKey: !!data.hasApiKey, 
+          provider: data.provider || "none" 
+        });
       })
       .catch((err) => {
         console.error("Health check error:", err);
@@ -97,7 +105,7 @@ export default function App() {
       {!healthStatus.hasApiKey && (
         <div className="bg-amber-500 text-white py-2 px-4 text-center text-xs font-semibold flex items-center justify-center gap-2" id="api-key-warning">
           <AlertCircle className="w-4 h-4 shrink-0" />
-          <span>检测到未配置 GEMINI_API_KEY。一键智能填充释义、图片拍照单词提取功能暂不可用。请在后台 Settings ➔ Secrets 处添加配置重启应用。</span>
+          <span>检测到未配置大模型 API Key。一键智能填充释义、句释功能暂不可用。请在后台 Settings ➔ Secrets 处添加 GEMINI_API_KEY 或 DEEPSEEK_API_KEY。</span>
         </div>
       )}
 
@@ -109,7 +117,18 @@ export default function App() {
               <BrainCircuit className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-base font-extrabold text-slate-900 tracking-tight">AI 智能单词默写助手</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-base font-extrabold text-slate-900 tracking-tight">AI 智能单词默写助手</h1>
+                {healthStatus.hasApiKey && (
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-extrabold uppercase tracking-wider ${
+                    healthStatus.provider === "deepseek" 
+                      ? "bg-blue-50 text-blue-600 border border-blue-200" 
+                      : "bg-indigo-50 text-indigo-600 border border-indigo-200"
+                  }`}>
+                    {healthStatus.provider === "deepseek" ? "DeepSeek" : "Gemini"}
+                  </span>
+                )}
+              </div>
               <p className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase">Spelling Dictation & Review</p>
             </div>
           </div>
