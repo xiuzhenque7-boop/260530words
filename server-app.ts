@@ -135,9 +135,52 @@ app.post("/api/extract-words", async (req, res) => {
   }
 
   if (provider === "deepseek") {
-    return res.status(400).json({ 
-      error: "检测到您正在使用 DeepSeek (一个极佳的文本模型)。然而 DeepSeek 暂时没有直接的视觉多模态接口处理图片。请通过 [导入 TXT 文件]、[手动输入] 或者配置 `GEMINI_API_KEY` 视觉大模型以启用拍照识别。" 
-    });
+    try {
+      console.log("DeepSeek provider detected for extract-words: falling back to OCR.space API...");
+      const formData = new FormData();
+      formData.append("apikey", "helloworld");
+      formData.append("base64Image", `data:${mimeType};base64,${image}`);
+      formData.append("language", "eng");
+
+      const ocrResponse = await fetch("https://api.ocr.space/parse/image", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!ocrResponse.ok) {
+        throw new Error(`OCR.space API returned status ${ocrResponse.status}`);
+      }
+
+      const ocrData = await ocrResponse.json();
+      const rawText = ocrData.ParsedResults?.[0]?.ParsedText || "";
+      
+      // Match English vocabulary words using regex
+      const wordsMatched = rawText.match(/[a-zA-Z\s\-']+/g) || [];
+      const cleanedWords: string[] = [];
+      
+      wordsMatched.forEach((chunk: string) => {
+        const parts = chunk.split(/[\s,]+/);
+        parts.forEach((p) => {
+          const pt = p.trim().toLowerCase();
+          if (pt.length > 1 && /^[a-z]+$/.test(pt)) {
+            cleanedWords.push(pt);
+          }
+        });
+      });
+
+      const deDuplicated = Array.from(new Set(cleanedWords));
+
+      if (deDuplicated.length > 0) {
+        return res.json({ words: deDuplicated });
+      } else {
+        throw new Error("OCR.space processed image successfully but found no readable English words.");
+      }
+    } catch (ocrErr: any) {
+      console.error("OCR.space fallback failed:", ocrErr);
+      return res.status(400).json({ 
+        error: "检测到您正在使用 DeepSeek (一个极佳的文本模型)。本地极速 OCR 解析由于网络或图片过大未能返回结果。请通过 [导入 TXT 文件]、[手动输入] 或配置 `GEMINI_API_KEY` 视觉大模型以启用拍照识别。" 
+      });
+    }
   }
 
   try {
