@@ -1,5 +1,4 @@
 import express from "express";
-import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -9,17 +8,20 @@ const app = express();
 // Support larger body size for image uploads/base64 strings
 app.use(express.json({ limit: "15mb" }));
 
-// Lazy initialization helper for Gemini
-let aiClient: GoogleGenAI | null = null;
-function getGeminiClient(): GoogleGenAI {
-  if (!aiClient) {
+// Lazy initialization helper for Gemini to avoid ESM import issues on startup in CommonJS/Vercel
+let aiInstance: any = null;
+let geminiType: any = null;
+
+async function initGemini() {
+  if (!aiInstance) {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       throw new Error(
         "GEMINI_API_KEY environment variable is required. Please set it in Vercel Environment Variables or Settings > Secrets."
       );
     }
-    aiClient = new GoogleGenAI({
+    const sdk = await import("@google/genai");
+    aiInstance = new sdk.GoogleGenAI({
       apiKey,
       httpOptions: {
         headers: {
@@ -27,8 +29,9 @@ function getGeminiClient(): GoogleGenAI {
         },
       },
     });
+    geminiType = sdk.Type;
   }
-  return aiClient;
+  return { ai: aiInstance, Type: geminiType };
 }
 
 // API Endpoints
@@ -48,7 +51,7 @@ app.post("/api/extract-words", async (req, res) => {
   }
 
   try {
-    const ai = getGeminiClient();
+    const { ai, Type } = await initGemini();
 
     const imagePart = {
       inlineData: {
@@ -110,7 +113,7 @@ app.post("/api/generate-details", async (req, res) => {
   }
 
   try {
-    const ai = getGeminiClient();
+    const { ai, Type } = await initGemini();
 
     const prompt = `Translate the following English words, generate their phonetic transcriptions using standard international IPA, provide a simple English example sentence illustrating the usage of each word (make the sentences helpful for dictation/practice, keeping them moderately short), and translate each example sentence to Chinese.
 
